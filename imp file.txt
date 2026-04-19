@@ -1,0 +1,92 @@
+#Binary search # pratical 2
+
+#include <stdio.h>
+#include <time.h>
+
+int binarySearch(int arr[], int n, int key)
+{
+    int low = 0, high = n - 1, mid;
+
+    while (low <= high)
+    {
+        mid = (low + high) / 2;
+
+        if (arr[mid] == key)
+            return mid;
+        else if (key < arr[mid])
+            high = mid - 1;
+        else
+            low = mid + 1;
+    }
+
+    return -1;
+}
+
+int main()
+{
+    int arr[100000], n, key, result;
+    clock_t start, end;
+    double cpu_time_used;
+
+    printf("Enter number of elements: ");
+    scanf("%d", &n);
+
+    printf("Enter %d elements in sorted order:\n", n);
+    for (int i = 0; i < n; i++)
+        scanf("%d", &arr[i]);
+
+    printf("Enter element to search: ");
+    scanf("%d", &key);
+
+    start = clock();
+
+    result = binarySearch(arr, n, key);
+
+    end = clock();
+
+    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+
+    if (result != -1)
+        printf("Element found at position %d\n", result + 1);
+    else
+        printf("Element not found\n");
+
+    printf("Time taken: %.10f seconds\n", cpu_time_used);
+    printf("Time Complexity: O(log n)\n");
+    printf("Space Complexity: O(1)\n");
+
+    return 0;
+}
+EXPERIMENT LCS
+
+#include <stdio.h>
+#include <string.h>
+
+int max(int a, int b) { return (a > b)? a : b; }
+
+void LCS(char X[], char Y[], int m, int n) {
+    int dp[m+1][n+1];
+
+    for (int i = 0; i <= m; i++) {
+        for (int j = 0; j <= n; j++) {
+            if (i == 0 || j == 0)
+                dp[i][j] = 0;
+            else if (X[i-1] == Y[j-1])
+                dp[i][j] = dp[i-1][j-1] + 1;
+            else
+                dp[i][j] = max(dp[i-1][j], dp[i][j-1]);
+        }
+    }
+
+    printf("Length of LCS is %d\n", dp[m][n]);
+}
+
+int main() {
+    char X[] = "AGGTAB";
+    char Y[] = "GXTXAYB";
+    int m = strlen(X);
+    int n = strlen(Y);
+    LCS(X, Y, m, n);
+    return 0;
+}
+

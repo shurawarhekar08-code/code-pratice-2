@@ -1,0 +1,586 @@
+Experiment no 4
+
+#include <stdio.h>
+#include <stdlib.h>
+
+struct node
+{
+    char ch;
+    int f;
+    struct node *l,*r;
+};
+
+struct node* newnode(char ch,int f)
+{
+    struct node* t=(struct node*)malloc(sizeof(struct node));
+    t->ch=ch;
+    t->f=f;
+    t->l=t->r=NULL;
+    return t;
+}
+
+void sort(struct node* a[],int n)
+{
+    int i,j;
+    struct node *t;
+
+    for(i=0;i<n-1;i++)
+        for(j=0;j<n-i-1;j++)
+            if(a[j]->f > a[j+1]->f)
+            {
+                t=a[j];
+                a[j]=a[j+1];
+                a[j+1]=t;
+            }
+}
+
+struct node* huffman(char ch[],int f[],int n)
+{
+    struct node* a[20];
+    int i;
+
+    for(i=0;i<n;i++)
+        a[i]=newnode(ch[i],f[i]);
+
+    while(n>1)
+    {
+        sort(a,n);
+
+        struct node *x=a[0];
+        struct node *y=a[1];
+
+        struct node *z=newnode('$',x->f+y->f);
+        z->l=x;
+        z->r=y;
+
+        for(i=2;i<n;i++)
+            a[i-2]=a[i];
+
+        a[n-2]=z;
+        n--;
+    }
+    return a[0];
+}
+
+void print(struct node* r,int code[],int top)
+{
+    int i;
+
+    if(r->l)
+    {
+        code[top]=0;
+        print(r->l,code,top+1);
+    }
+
+    if(r->r)
+    {
+        code[top]=1;
+        print(r->r,code,top+1);
+    }
+
+    if(!r->l && !r->r)
+    {
+        printf("%c : ",r->ch);
+        for(i=0;i<top;i++)
+            printf("%d",code[i]);
+        printf("\n");
+    }
+}
+
+int main()
+{
+    char ch[]={'A','B','C','D','E','F'};
+    int f[]={5,9,12,13,16,45};
+    int code[20];
+
+    struct node* root=huffman(ch,f,6);
+
+    printf("Huffman Codes:\n");
+    print(root,code,0);
+
+    return 0;
+}
+-----------------------------------------------------------------
+EXPERIMENT NO::::: 5
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define INF 9999
+#define MAX 100
+
+// ---------- STRUCTURE FOR EDGE (Used in Kruskal) ----------
+typedef struct {
+    int u, v, w;
+} Edge;
+
+// ---------- UNION-FIND FUNCTIONS (for Kruskal) ----------
+int find(int parent[], int i) {
+    while (parent[i] != i)
+        i = parent[i];
+    return i;
+}
+
+void unionSets(int parent[], int u, int v) {
+    int uRoot = find(parent, u);
+    int vRoot = find(parent, v);
+    parent[uRoot] = vRoot;
+}
+
+// ---------- PRIM'S ALGORITHM ----------
+void primMST(int cost[MAX][MAX], int n) {
+    int selected[MAX] = {0};
+    int no_edge = 0, x, y;
+    int totalCost = 0;
+
+    selected[0] = 1; // Start from vertex 0
+
+    printf("\nPrim’s Algorithm Edges:\n");
+    while (no_edge < n - 1) {
+        int min = INF;
+        x = 0;
+        y = 0;
+
+        for (int i = 0; i < n; i++) {
+            if (selected[i]) {
+                for (int j = 0; j < n; j++) {
+                    if (!selected[j] && cost[i][j]) {
+                        if (min > cost[i][j]) {
+                            min = cost[i][j];
+                            x = i;
+                            y = j;
+                        }
+                    }
+                }
+            }
+        }
+
+        printf("Edge %d: (%d - %d) cost: %d\n", no_edge + 1, x, y, cost[x][y]);
+        totalCost += cost[x][y];
+        selected[y] = 1;
+        no_edge++;
+    }
+
+    printf("Total cost using Prim’s Algorithm = %d\n", totalCost);
+}
+
+// ---------- KRUSKAL'S ALGORITHM ----------
+void kruskalMST(int cost[MAX][MAX], int n) {
+    Edge edges[MAX * MAX];
+    int edgeCount = 0;
+
+    // Convert adjacency matrix to edge list
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (cost[i][j] != 0 && cost[i][j] != INF) {
+                edges[edgeCount].u = i;
+                edges[edgeCount].v = j;
+                edges[edgeCount].w = cost[i][j];
+                edgeCount++;
+            }
+        }
+    }
+
+    // Sort edges by weight (simple bubble sort)
+    for (int i = 0; i < edgeCount - 1; i++) {
+        for (int j = 0; j < edgeCount - i - 1; j++) {
+            if (edges[j].w > edges[j + 1].w) {
+                Edge temp = edges[j];
+                edges[j] = edges[j + 1];
+                edges[j + 1] = temp;
+            }
+        }
+    }
+
+    int parent[MAX];
+    for (int i = 0; i < n; i++)
+        parent[i] = i;
+
+    int totalCost = 0, edgeAdded = 0;
+
+    printf("\nKruskal’s Algorithm Edges:\n");
+    for (int i = 0; i < edgeCount && edgeAdded < n - 1; i++) {
+        int uRoot = find(parent, edges[i].u);
+        int vRoot = find(parent, edges[i].v);
+
+        if (uRoot != vRoot) {
+            printf("Edge %d: (%d - %d) cost: %d\n", edgeAdded + 1, edges[i].u, edges[i].v, edges[i].w);
+            totalCost += edges[i].w;
+            unionSets(parent, uRoot, vRoot);
+            edgeAdded++;
+        }
+    }
+
+    printf("Total cost using Kruskal’s Algorithm = %d\n", totalCost);
+}
+
+// ---------- MAIN FUNCTION ----------
+int main() {
+    int n, cost[MAX][MAX];
+
+    printf("Enter number of vertices: ");
+    scanf("%d", &n);
+
+    printf("Enter the cost adjacency matrix (use 0 for no edge):\n");
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            scanf("%d", &cost[i][j]);
+            if (cost[i][j] == 0 && i != j)
+                cost[i][j] = INF;
+        }
+    }
+
+    // Measure execution time for Prim’s
+    clock_t start, end;
+    double primTime, kruskalTime;
+
+    start = clock();
+    primMST(cost, n);
+    end = clock();
+    primTime = ((double)(end - start)) / CLOCKS_PER_SEC;
+
+    // Measure execution time for Kruskal’s
+    start = clock();
+    kruskalMST(cost, n);
+    end = clock();
+    kruskalTime = ((double)(end - start)) / CLOCKS_PER_SEC;
+
+    printf("\n⏱️ Execution Time Comparison:");
+    printf("\nPrim’s Algorithm Time: %.10f seconds", primTime);
+    printf("\nKruskal’s Algorithm Time: %.10f seconds\n", kruskalTime);
+
+    return 0;
+}
+-------------------------------------------------------------------------------------------
+@ EXPERIMENT NO 6
+
+#include <stdio.h>
+
+// Function to return maximum of two numbers
+int max(int a, int b) {
+    return (a > b) ? a : b;
+}
+
+// Function to solve 0/1 Knapsack using Dynamic Programming
+int knapSack(int W, int wt[], int val[], int n) {
+    int i, w;
+    int K[n + 1][W + 1];
+
+    // Build table K[][] in bottom-up manner
+    for (i = 0; i <= n; i++) {
+        for (w = 0; w <= W; w++) {
+            if (i == 0 || w == 0)
+                K[i][w] = 0;
+            else if (wt[i - 1] <= w)
+                K[i][w] = max(val[i - 1] + K[i - 1][w - wt[i - 1]], K[i - 1][w]);
+            else
+                K[i][w] = K[i - 1][w];
+        }
+    }
+
+    // Display DP Table
+    printf("\nDynamic Programming Table:\n");
+    for (i = 0; i <= n; i++) {
+        for (w = 0; w <= W; w++) {
+            printf("%3d ", K[i][w]);
+        }
+        printf("\n");
+    }
+
+    return K[n][W];  // Final maximum value
+}
+
+int main() {
+    int val[20], wt[20], W, n, i;
+    printf("Enter number of items: ");
+    scanf("%d", &n);
+
+    printf("Enter values (profits) of %d items:\n", n);
+    for (i = 0; i < n; i++) {
+        scanf("%d", &val[i]);
+    }
+
+    printf("Enter weights of %d items:\n", n);
+    for (i = 0; i < n; i++) {
+        scanf("%d", &wt[i]);
+    }
+
+    printf("Enter capacity of Knapsack: ");
+    scanf("%d", &W);
+
+    int maxValue = knapSack(W, wt, val, n);
+
+    printf("\nMaximum value that can be put in the knapsack = %d\n", maxValue);
+
+    return 0;
+}
+----------------------------------------------------------------
+
+EXPERIMENt NO 7
+
+#include <stdio.h>
+#include <string.h>
+
+int max(int a, int b) { return (a > b)? a : b; }
+
+void LCS(char X[], char Y[], int m, int n) {
+    int dp[m+1][n+1];
+
+    for (int i = 0; i <= m; i++) {
+        for (int j = 0; j <= n; j++) {
+            if (i == 0 || j == 0)
+                dp[i][j] = 0;
+            else if (X[i-1] == Y[j-1])
+                dp[i][j] = dp[i-1][j-1] + 1;
+            else
+                dp[i][j] = max(dp[i-1][j], dp[i][j-1]);
+        }
+    }
+
+    printf("Length of LCS is %d\n", dp[m][n]);
+}
+
+int main() {
+    char X[] = "AGGTAB";
+    char Y[] = "GXTXAYB";
+    int m = strlen(X);
+    int n = strlen(Y);
+    LCS(X, Y, m, n);
+    return 0;
+}
+
+_________________________________________________________________
+
+EXPERIMENT NO 8
+
+#include <stdio.h>
+#define MAX 10
+
+int adj[MAX][MAX], visited[MAX], n;
+
+// BFS Function
+void bfs(int start) {
+    int queue[MAX], front = 0, rear = 0;
+    visited[start] = 1;
+    queue[rear++] = start;
+    printf("BFS Traversal: ");
+
+    while (front < rear) {
+        int node = queue[front++];
+        printf("%d ", node);
+
+        for (int i = 0; i < n; i++) {
+            if (adj[node][i] && !visited[i]) {
+                queue[rear++] = i;
+                visited[i] = 1;
+            }
+        }
+    }
+    printf("\n");
+}
+
+// DFS Function
+void dfs(int start) {
+    printf("%d ", start);
+    visited[start] = 1;
+
+    for (int i = 0; i < n; i++) {
+        if (adj[start][i] && !visited[i]) {
+            dfs(i);
+        }
+    }
+}
+
+int main() {
+    int i, j, start;
+    printf("Enter number of vertices: ");
+    scanf("%d", &n);
+
+    printf("Enter adjacency matrix:\n");
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            scanf("%d", &adj[i][j]);
+        }
+    }
+
+    printf("Enter starting vertex: ");
+    scanf("%d", &start);
+
+    for (i = 0; i < n; i++) visited[i] = 0;
+    bfs(start);
+
+    for (i = 0; i < n; i++) visited[i] = 0;
+    printf("DFS Traversal: ");
+    dfs(start);
+    printf("\n");
+
+    return 0;
+}
+-------------------------------------------------------------------------
+EXPERIMNT 9
+
+#include <stdio.h>
+
+#define V 4       // Number of vertices
+#define INF 99999 // Infinity (large value)
+
+// Function to print the distance matrix
+void printSolution(int dist[V][V]) {
+    printf("\nShortest distances between every pair of vertices:\n");
+    for (int i = 0; i < V; i++) {
+        for (int j = 0; j < V; j++) {
+            if (dist[i][j] == INF)
+                printf("%7s", "INF");
+            else
+                printf("%7d", dist[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+// Function to implement Floyd–Warshall Algorithm
+void floydWarshall(int graph[V][V]) {
+    int dist[V][V]; // Matrix to store shortest path distances
+
+    // Step 1: Initialize distance matrix same as input graph
+    for (int i = 0; i < V; i++)
+        for (int j = 0; j < V; j++)
+            dist[i][j] = graph[i][j];
+
+    // Step 2: Update distance matrix using dynamic programming
+    for (int k = 0; k < V; k++) {        // Pick all vertices as intermediate
+        for (int i = 0; i < V; i++) {    // Pick all vertices as source
+            for (int j = 0; j < V; j++) { // Pick all vertices as destination
+                if (dist[i][k] + dist[k][j] < dist[i][j])
+                    dist[i][j] = dist[i][k] + dist[k][j];
+            }
+        }
+    }
+
+    // Step 3: Print the final shortest distance matrix
+    printSolution(dist);
+}
+
+int main() {
+    /* Input weighted graph as adjacency matrix
+       0 indicates self-loop
+       INF means no direct edge between the vertices */
+    int graph[V][V] = {
+        {0,   5,  INF, 10},
+        {INF, 0,   3,  INF},
+        {INF, INF, 0,   1},
+        {INF, INF, INF, 0}
+    };
+
+    printf("Floyd–Warshall Algorithm Implementation\n");
+    printf("--------------------------------------\n");
+
+    floydWarshall(graph);
+
+    return 0;
+}
+___________________________________________________________
+
+EXPERMINET 10
+
+#include <stdio.h>
+#include <stdbool.h>
+#include <limits.h>
+#include <math.h>
+
+#define N 4  // Number of cities
+#define INF 9999
+
+int costMatrix[N][N] = {
+    {0, 10, 15, 20},
+    {10, 0, 35, 25},
+    {15, 35, 0, 30},
+    {20, 25, 30, 0}
+};
+
+// ---------- FUNCTION: Find Minimum Cost Using Brute Force (Exact TSP) ----------
+int minCost = INF;
+int visitedAll = (1 << N) - 1;
+int dp[1 << N][N];  // DP for memoization
+
+int tspExact(int mask, int pos) {
+    if (mask == visitedAll)
+        return costMatrix[pos][0];  // return to starting point
+
+    if (dp[mask][pos] != -1)
+        return dp[mask][pos];
+
+    int ans = INF;
+
+    for (int city = 0; city < N; city++) {
+        if ((mask & (1 << city)) == 0) {  // if not visited
+            int newAns = costMatrix[pos][city] + tspExact(mask | (1 << city), city);
+            if (newAns < ans)
+                ans = newAns;
+        }
+    }
+
+    dp[mask][pos] = ans;
+    return ans;
+}
+
+// ---------- FUNCTION: Find Approximate Solution using Nearest Neighbor ----------
+int tspApprox() {
+    bool visited[N] = {false};
+    int totalCost = 0;
+    int current = 0;  // Start from city 0
+    visited[0] = true;
+
+    printf("\nNearest Neighbor Path: 0");
+
+    for (int count = 1; count < N; count++) {
+        int nearest = -1;
+        int minDist = INF;
+
+        for (int j = 0; j < N; j++) {
+            if (!visited[j] && costMatrix[current][j] < minDist && costMatrix[current][j] != 0) {
+                minDist = costMatrix[current][j];
+                nearest = j;
+            }
+        }
+
+        visited[nearest] = true;
+        totalCost += minDist;
+        current = nearest;
+        printf(" -> %d", current);
+    }
+
+    totalCost += costMatrix[current][0]; // return to start
+    printf(" -> 0\n");
+
+    return totalCost;
+}
+
+// ---------- MAIN FUNCTION ----------
+int main() {
+    int i, j;
+    for (i = 0; i < (1 << N); i++)
+        for (j = 0; j < N; j++)
+            dp[i][j] = -1;
+
+    printf("Traveling Salesperson Problem (TSP) Comparison\n");
+    printf("----------------------------------------------\n");
+
+    // Exact solution using Dynamic Programming (Bitmask)
+    int exactCost = tspExact(1, 0);
+
+    // Approximation using Nearest Neighbor
+    int approxCost = tspApprox();
+
+    // Compute approximation error
+    double errorPercent = ((double)(approxCost - exactCost) / exactCost) * 100.0;
+
+    printf("\nOptimal (Exact) TSP Cost = %d", exactCost);
+    printf("\nApproximate (Nearest Neighbor) TSP Cost = %d", approxCost);
+    printf("\nApproximation Error = %.2f%%\n", errorPercent);
+
+    return 0;
+}
+
+6y
